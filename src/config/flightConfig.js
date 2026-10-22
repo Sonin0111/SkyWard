@@ -79,10 +79,11 @@ export const FLIGHT_CONFIG = {
     CnP: -0.045,                // Adverse yaw from roll rate
 
     // Control surface authority (torques scaled by dynamic pressure factor)
-    elevatorAuthority: 3.1,     // Pitch moment capability (scales with q_bar)
+    elevatorAuthority: 2.35,    // Pitch moment capability (scales with q_bar)
     aileronAuthority: 3.8,      // Roll moment capability
     rudderAuthority: 1.75,      // Yaw moment capability
-    bankTurnCoordFactor: 0.48,  // Natural coordinated turn yaw rate coupling: g/V * tan(phi)
+    bankTurnCoordFactor: 0.72,  // Natural coordinated turn yaw rate coupling: g/V * tan(phi)
+    maxBankAngleDeg: 60.0,      // FBWA bank angle limit (degrees) for predictable turn holding
 
     // Control surface actuator smoothing (servo response speed in 1/s)
     servoRatePitch: 11.0,

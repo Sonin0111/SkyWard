@@ -70,31 +70,36 @@ export function runVerificationSuite() {
     );
   }
 
-  // Test 3: 6-DOF Fixed-Timestep Level Cruise Stability (~110 km/h)
+  // Test 3: 6-DOF Fixed-Timestep Hands-Off Level Cruise Stability (~110 km/h)
   {
     const phys = new FlightPhysics(FLIGHT_CONFIG);
     phys.reset(() => 20.0);
 
     const dt = 1 / 120;
-    // Simulate 10 seconds (1,200 steps) with gentle wings-level altitude hold
-    for (let i = 0; i < 1200; i++) {
-      const pitchCmd = (380.0 - phys.position.y) * 0.02 - phys.velocity.y * 0.04;
-      phys.step(dt, { pitch: pitchCmd, roll: 0, yaw: 0, throttle: 0.58 }, () => 20.0);
+    // Simulate 15 seconds (1,800 steps) completely hands-off at 58% cruise throttle
+    for (let i = 0; i < 1800; i++) {
+      phys.step(dt, { pitch: 0, roll: 0, yaw: 0, throttle: 0.58 }, () => 20.0);
     }
 
     const finalSpeedKmh = phys.telemetry.airspeedKmh;
+    const altChange = Math.abs(phys.position.y - 380.0);
     const isFiniteState =
       Number.isFinite(phys.position.x) &&
       Number.isFinite(phys.position.y) &&
       Number.isFinite(phys.position.z) &&
       Number.isFinite(phys.quaternion.w);
 
-    const passed = isFiniteState && finalSpeedKmh >= 98.0 && finalSpeedKmh <= 120.0 && !phys.telemetry.crashed;
+    const passed =
+      isFiniteState &&
+      finalSpeedKmh >= 102.0 &&
+      finalSpeedKmh <= 118.0 &&
+      altChange < 15.0 &&
+      !phys.telemetry.crashed;
 
     record(
-      '3. 6-DOF Cruise Flight Stability (1,200 Steps @ 120Hz, ~110 km/h)',
+      '3. 6-DOF Hands-Off Cruise Flight Stability (1,800 Steps @ 120Hz, ~110 km/h)',
       passed,
-      `FinalSpeed=${finalSpeedKmh.toFixed(1)} km/h, Alt=${phys.position.y.toFixed(1)}m, AoA=${phys.telemetry.alphaDeg.toFixed(2)}deg`
+      `FinalSpeed=${finalSpeedKmh.toFixed(1)} km/h, Alt=${phys.position.y.toFixed(1)}m (dAlt=${altChange.toFixed(1)}m), AoA=${phys.telemetry.alphaDeg.toFixed(2)}deg`
     );
   }
 
@@ -194,6 +199,46 @@ export function runVerificationSuite() {
       '6. Seeded Procedural Enemy UAV Route Reproducibility & Terrain Safety',
       passed,
       `SameSeedMatch=${sameSeedMatch}, DiffSeedDistinct=${diffSeedDistinct}, TerrainClearanceOK=${allClearTerrain}, Pattern=${ai1.patternName}`
+    );
+  }
+
+  // Test 7: Coordinated Banked Turn, Climb/Dive Response & Wing-Leveling Recovery
+  {
+    const phys = new FlightPhysics(FLIGHT_CONFIG);
+    phys.reset(() => 20.0);
+    const dt = 1 / 120;
+
+    // 1. Bank right (roll = +0.65) for 2.0 seconds -> should roll right (rollDeg > 15) and turn heading right (headingDeg > 10)
+    for (let i = 0; i < 240; i++) {
+      phys.step(dt, { pitch: 0.1, roll: 0.65, yaw: 0, throttle: 0.65 }, () => 20.0);
+    }
+    const bankedRollDeg = phys.telemetry.rollDeg;
+    const turnedHeadingDeg = phys.telemetry.headingDeg;
+
+    // 2. Release stick (roll = 0, pitch = 0) for 4.0 seconds -> wings should level back toward 0 deg
+    for (let i = 0; i < 480; i++) {
+      phys.step(dt, { pitch: 0, roll: 0, yaw: 0, throttle: 0.58 }, () => 20.0);
+    }
+    const recoveredRollDeg = phys.telemetry.rollDeg;
+
+    // 3. Climb command (pitch = +0.7, throttle = 1.0) for 2.0 seconds -> verticalSpeedMs > 3.0 m/s
+    for (let i = 0; i < 240; i++) {
+      phys.step(dt, { pitch: 0.7, roll: 0, yaw: 0, throttle: 1.0 }, () => 20.0);
+    }
+    const climbVsiMs = phys.telemetry.verticalSpeedMs;
+
+    const passed =
+      bankedRollDeg > 18.0 &&
+      turnedHeadingDeg > 8.0 &&
+      turnedHeadingDeg < 180.0 &&
+      Math.abs(recoveredRollDeg) < bankedRollDeg * 0.45 &&
+      climbVsiMs > 3.0 &&
+      !phys.telemetry.crashed;
+
+    record(
+      '7. Coordinated Banked Turn, Wing-Leveling Stability & Climb Authority',
+      passed,
+      `BankRoll=${bankedRollDeg.toFixed(1)}deg, Heading=${turnedHeadingDeg.toFixed(1)}deg, RecoveredRoll=${recoveredRollDeg.toFixed(1)}deg, ClimbVSI=+${climbVsiMs.toFixed(1)}m/s`
     );
   }
 

@@ -73,16 +73,16 @@ export class ReconUAVModel {
       })
     };
 
-    // High-contrast Thermal IR (FLIR) override materials
+    // High-contrast Thermal IR (FLIR) override materials (fog: false so thermal signature cuts through haze)
     this.thermalMaterials = {
-      airframeWarmWhite: new THREE.MeshBasicMaterial({ color: 0xf2f7ff }),
-      wingWarmWhite: new THREE.MeshBasicMaterial({ color: 0xe4edf7 }),
-      engineCoreWhiteHot: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-      wreckageWhiteHot: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-      airframeWarmBlack: new THREE.MeshBasicMaterial({ color: 0x16191d }),
-      wingWarmBlack: new THREE.MeshBasicMaterial({ color: 0x242930 }),
-      engineCoreBlackHot: new THREE.MeshBasicMaterial({ color: 0x020203 }),
-      wreckageBlackHot: new THREE.MeshBasicMaterial({ color: 0x040406 })
+      airframeWarmWhite: new THREE.MeshBasicMaterial({ color: 0xf2f7ff, fog: false }),
+      wingWarmWhite: new THREE.MeshBasicMaterial({ color: 0xe4edf7, fog: false }),
+      engineCoreWhiteHot: new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }),
+      wreckageWhiteHot: new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }),
+      airframeWarmBlack: new THREE.MeshBasicMaterial({ color: 0x0c0e11, fog: false }),
+      wingWarmBlack: new THREE.MeshBasicMaterial({ color: 0x16191e, fog: false }),
+      engineCoreBlackHot: new THREE.MeshBasicMaterial({ color: 0x010102, fog: false }),
+      wreckageBlackHot: new THREE.MeshBasicMaterial({ color: 0x020203, fog: false })
     };
   }
 

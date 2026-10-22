@@ -51,6 +51,7 @@ class SkyWardSimulator {
       onToggleControllerUI: () => this.controllerUI.toggle(),
       onRestart: () => this.restartWithNewSeed(),
       onToggleArm: () => this.toggleManualArm(),
+      onToggleFullscreen: () => this.toggleFullscreen(),
       onGamepadStatusChange: (status) => this._updateTopBarControllerBadge(status)
     });
 
@@ -66,7 +67,9 @@ class SkyWardSimulator {
         onDetonate: () => this.triggerWarheadDetonation(),
         onToggleCamera: () => this.toggleCameraView(),
         onToggleThermal: () => this.toggleOpticalMode(),
-        onRestart: () => this.restartWithNewSeed()
+        onRestart: () => this.restartWithNewSeed(),
+        onToggleFullscreen: () => this.toggleFullscreen(),
+        onEnterFullscreenLandscape: () => this.enterFullscreen(true)
       }
     );
 
@@ -95,6 +98,11 @@ class SkyWardSimulator {
 
     this._bindUIControls();
     this._bindWindowLifecycle();
+
+    // If detected as a mobile / touchscreen device, immediately open in Fullscreen + Landscape mode
+    if (this.touchUI.isMobile || this.touchUI.isTouchDevice) {
+      this._initMobileFullscreenAndLandscape();
+    }
 
     // Start initial scenario
     this.startScenario(this.currentSeed);
@@ -443,7 +451,7 @@ class SkyWardSimulator {
       this.interceptorModel.root.position.copy(playerInterp.position);
       this.interceptorModel.root.quaternion.copy(playerInterp.quaternion);
       this.interceptorModel.updateAnimations(
-        this.physics.actuators,
+        this.physics.surfaceDeflections,
         this.physics.telemetry.rpm,
         frameDt
       );
@@ -488,6 +496,7 @@ class SkyWardSimulator {
   }
 
   _bindUIControls() {
+    document.getElementById('btn-fullscreen')?.addEventListener('click', () => this.toggleFullscreen());
     document.getElementById('btn-cam-view')?.addEventListener('click', () => this.toggleCameraView());
     document.getElementById('btn-optical-mode')?.addEventListener('click', () => this.toggleOpticalMode());
     document.getElementById('btn-controller-ui')?.addEventListener('click', () => this.controllerUI.toggle());
@@ -625,6 +634,103 @@ class SkyWardSimulator {
     }
   }
 
+  /**
+   * Fullscreen & Mobile Landscape Mode Management
+   */
+  isFullscreen() {
+    return Boolean(
+      document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+    );
+  }
+
+  async enterFullscreen(lockLandscape = true) {
+    const docEl = document.documentElement;
+    try {
+      if (!this.isFullscreen()) {
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen({ navigationUI: 'hide' });
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        }
+      }
+    } catch (_) {
+      // Browser may require a user gesture before entering fullscreen
+    }
+
+    if (lockLandscape) {
+      this.lockLandscapeOrientation();
+    }
+    this._updateFullscreenButtonState();
+  }
+
+  async exitFullscreen() {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    } catch (_) {}
+    this._updateFullscreenButtonState();
+  }
+
+  toggleFullscreen() {
+    if (this.isFullscreen()) {
+      return this.exitFullscreen();
+    } else {
+      return this.enterFullscreen(true);
+    }
+  }
+
+  lockLandscapeOrientation() {
+    if (
+      typeof screen !== 'undefined' &&
+      screen.orientation &&
+      typeof screen.orientation.lock === 'function'
+    ) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+  }
+
+  _updateFullscreenButtonState() {
+    const active = this.isFullscreen();
+    const topBtn = document.getElementById('btn-fullscreen');
+    if (topBtn) {
+      topBtn.textContent = active ? 'Exit Full [F]' : 'Fullscreen [F]';
+      topBtn.classList.toggle('hud-btn-primary', active);
+    }
+    const touchBtn = document.getElementById('touch-btn-fullscreen');
+    if (touchBtn) {
+      touchBtn.textContent = active ? 'EXIT FULL' : 'FULL [F]';
+    }
+  }
+
+  _initMobileFullscreenAndLandscape() {
+    // 1. Immediately attempt fullscreen & landscape lock on load
+    this.enterFullscreen(true);
+
+    // 2. Also bind a one-time gesture listener on first touch/click so if the mobile browser
+    //    blocked non-gesture requestFullscreen() at boot, it enters fullscreen + landscape on first touch
+    const onFirstMobileGesture = () => {
+      if (!this.isFullscreen()) {
+        this.enterFullscreen(true);
+      } else {
+        this.lockLandscapeOrientation();
+      }
+    };
+
+    window.addEventListener('touchstart', onFirstMobileGesture, { passive: true, once: true });
+    window.addEventListener('pointerdown', onFirstMobileGesture, { passive: true, once: true });
+    window.addEventListener('click', onFirstMobileGesture, { passive: true, once: true });
+  }
+
   _bindWindowLifecycle() {
     this._onResize = () => {
       const w = window.innerWidth;
@@ -632,6 +738,14 @@ class SkyWardSimulator {
       this.renderer.setSize(w, h);
       this.cameraSystem.onResize(w, h);
       this.osd.onResize(w, h);
+    };
+
+    this._onFullscreenChange = () => {
+      this._updateFullscreenButtonState();
+      if (this.isFullscreen() && (this.touchUI.isMobile || this.touchUI.isTouchDevice)) {
+        this.lockLandscapeOrientation();
+      }
+      this._onResize();
     };
 
     this._onVisibilityChange = () => {
@@ -644,6 +758,8 @@ class SkyWardSimulator {
 
     window.addEventListener('resize', this._onResize);
     window.addEventListener('visibilitychange', this._onVisibilityChange);
+    document.addEventListener('fullscreenchange', this._onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', this._onFullscreenChange);
   }
 
   _showFatalError(msg) {

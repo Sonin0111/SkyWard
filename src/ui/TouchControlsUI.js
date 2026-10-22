@@ -21,16 +21,28 @@ export class TouchControlsUI {
       onDetonate: callbacks.onDetonate || (() => {}),
       onToggleCamera: callbacks.onToggleCamera || (() => {}),
       onToggleThermal: callbacks.onToggleThermal || (() => {}),
-      onRestart: callbacks.onRestart || (() => {})
+      onRestart: callbacks.onRestart || (() => {}),
+      onToggleFullscreen: callbacks.onToggleFullscreen || (() => {}),
+      onEnterFullscreenLandscape: callbacks.onEnterFullscreenLandscape || (() => {})
     };
 
-    // Detect mobile / touchscreen capability
+    // Detect mobile / touchscreen capability via User-Agent, UA-CH, Coarse Pointer, or Touch Points
+    const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || '';
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua) ||
+      Boolean(typeof navigator !== 'undefined' && navigator.userAgentData && navigator.userAgentData.mobile);
+
     this.isTouchDevice =
       typeof window !== 'undefined' &&
-      ('ontouchstart' in window ||
+      (isMobileUA ||
+        'ontouchstart' in window ||
         (navigator && navigator.maxTouchPoints > 0) ||
         (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
         window.innerWidth <= 960);
+
+    this.isMobile = Boolean(
+      isMobileUA ||
+      (this.isTouchDevice && (window.innerWidth <= 1024 || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)))
+    );
 
     this.enabled = this.isTouchDevice;
     this.hiddenForDetonation = false;
@@ -58,6 +70,7 @@ export class TouchControlsUI {
         <div class="touch-quick-btns">
           <button id="touch-btn-view" class="touch-action-btn" type="button">CAM [V]</button>
           <button id="touch-btn-optic" class="touch-action-btn" type="button">FLIR [T]</button>
+          <button id="touch-btn-fullscreen" class="touch-action-btn" type="button">FULL [F]</button>
         </div>
         <div id="touch-gimbal-left" class="touch-gimbal" data-side="left">
           <div class="gimbal-grid-h"></div>
@@ -86,9 +99,9 @@ export class TouchControlsUI {
       <div id="orientation-prompt" class="orientation-prompt hidden">
         <div class="orientation-card">
           <div class="orientation-icon">⟳</div>
-          <h3>ROTATE DEVICE TO LANDSCAPE</h3>
-          <p>SkyWard's FPV OSD and Dual Mode-2 Virtual RC Gimbals are designed for horizontal landscape flight.</p>
-          <button id="orientation-dismiss-btn" class="hud-btn hud-btn-primary" type="button">Continue in Current View</button>
+          <h3>FULLSCREEN LANDSCAPE FLIGHT MODE</h3>
+          <p>SkyWard's FPV OSD and Dual Mode-2 Virtual RC Gimbals are optimized for full-screen horizontal landscape flight.</p>
+          <button id="orientation-dismiss-btn" class="hud-btn hud-btn-primary" type="button">Enter Fullscreen &amp; Landscape</button>
         </div>
       </div>
     `;
@@ -134,11 +147,13 @@ export class TouchControlsUI {
     bindTouchBtn('#touch-btn-detonate', () => this.callbacks.onDetonate());
     bindTouchBtn('#touch-btn-view', () => this.callbacks.onToggleCamera());
     bindTouchBtn('#touch-btn-optic', () => this.callbacks.onToggleThermal());
+    bindTouchBtn('#touch-btn-fullscreen', () => this.callbacks.onToggleFullscreen());
     bindTouchBtn('#touch-btn-restart', () => this.callbacks.onRestart());
 
     const dismissBtn = this.container.querySelector('#orientation-dismiss-btn');
     if (dismissBtn) {
       dismissBtn.addEventListener('click', () => {
+        this.callbacks.onEnterFullscreenLandscape();
         this.orientationDismissed = true;
         this._checkOrientation();
       });
@@ -200,7 +215,7 @@ export class TouchControlsUI {
       updateFromEvent(e.clientX, e.clientY);
     });
 
-    gimbalEl.addEventListener('pointermove', (e) => {
+    const onMove = (e) => {
       if (side === 'left' && e.pointerId === this.leftPointerId) {
         e.preventDefault();
         updateFromEvent(e.clientX, e.clientY);
@@ -208,7 +223,7 @@ export class TouchControlsUI {
         e.preventDefault();
         updateFromEvent(e.clientX, e.clientY);
       }
-    });
+    };
 
     const onRelease = (e) => {
       if (side === 'left' && e.pointerId === this.leftPointerId) {
@@ -229,8 +244,12 @@ export class TouchControlsUI {
       }
     };
 
+    gimbalEl.addEventListener('pointermove', onMove);
     gimbalEl.addEventListener('pointerup', onRelease);
     gimbalEl.addEventListener('pointercancel', onRelease);
+    window.addEventListener('pointermove', onMove, { passive: false });
+    window.addEventListener('pointerup', onRelease);
+    window.addEventListener('pointercancel', onRelease);
   }
 
   _syncToInputManager() {
@@ -246,17 +265,21 @@ export class TouchControlsUI {
 
   _updateKnobVisuals() {
     if (this.leftKnobEl) {
-      // Left knob X: leftYaw [-1, 1] -> [-38%, +38%]
-      // Left knob Y: leftThrottle [0, 1] -> [+38% (bottom), -38% (top)]
-      const lxPct = this.leftYaw * 38.0;
-      const lyPct = (1.0 - this.leftThrottle * 2.0) * 38.0;
-      this.leftKnobEl.style.transform = `translate(calc(-50% + ${lxPct}px), calc(-50% + ${lyPct}px))`;
+      const travelL = this.leftGimbalEl && this.leftGimbalEl.clientWidth > 0
+        ? this.leftGimbalEl.clientWidth * 0.34
+        : 42.0;
+      const lxPx = this.leftYaw * travelL;
+      const lyPx = (1.0 - this.leftThrottle * 2.0) * travelL;
+      this.leftKnobEl.style.transform = `translate(calc(-50% + ${lxPx.toFixed(1)}px), calc(-50% + ${lyPx.toFixed(1)}px))`;
     }
 
     if (this.rightKnobEl) {
-      const rxPct = this.rightRoll * 38.0;
-      const ryPct = this.rightPitch * 38.0;
-      this.rightKnobEl.style.transform = `translate(calc(-50% + ${rxPct}px), calc(-50% + ${ryPct}px))`;
+      const travelR = this.rightGimbalEl && this.rightGimbalEl.clientWidth > 0
+        ? this.rightGimbalEl.clientWidth * 0.34
+        : 42.0;
+      const rxPx = this.rightRoll * travelR;
+      const ryPx = this.rightPitch * travelR;
+      this.rightKnobEl.style.transform = `translate(calc(-50% + ${rxPx.toFixed(1)}px), calc(-50% + ${ryPx.toFixed(1)}px))`;
     }
   }
 

@@ -38,6 +38,13 @@ export class FlightPhysics {
       throttle: config.spawn.initialThrottle
     };
 
+    // Physical control surface deflections for 3D mesh animation
+    this.surfaceDeflections = {
+      pitch: 0.0,
+      roll: 0.0,
+      yaw: 0.0
+    };
+
     // Derived flight telemetry (updated every physics step)
     this.telemetry = {
       airspeedMs: 0.0,
@@ -119,12 +126,19 @@ export class FlightPhysics {
     this.prevPosition.copy(this.position);
 
     const headingRad = (spawn.headingDeg || 0.0) * DEG2RAD;
-    const trimPitchRad = this.config.aero.pitchTrimAlphaRad;
+    const speedMs = (spawn.initialSpeedKmh || this.config.envelope.cruiseSpeedKmh) / 3.6;
+    const rhoSpawn = computeAirDensityISA(startAlt);
+    const qSpawn = 0.5 * rhoSpawn * speedMs * speedMs;
+    const weightN = this.config.airframe.totalMassKg * this.config.environment.gravity;
+    const clReq = weightN / Math.max(50.0, qSpawn * this.config.airframe.wingAreaM2);
+    const trimPitchRad = clamp(
+      (clReq - this.config.aero.CL0) / this.config.aero.CLAlpha,
+      0.005,
+      0.12
+    );
     this._euler.set(trimPitchRad, -headingRad, 0.0, 'YXZ');
     this.quaternion.setFromEuler(this._euler);
     this.prevQuaternion.copy(this.quaternion);
-
-    const speedMs = (spawn.initialSpeedKmh || this.config.envelope.cruiseSpeedKmh) / 3.6;
     this.velocity.set(
       Math.sin(headingRad) * speedMs,
       0.0,
@@ -377,29 +391,68 @@ export class FlightPhysics {
     // Dimensionless angular rate damping scale (scales smoothly with airspeed)
     const aeroDampScale = Math.max(0.35, clamp(airspeed / 25.0, 0.35, 2.2) * (rho / 1.225));
 
+    // Natural coordinated turn rate around World +Y when banked: omega_world = (g / V) * tan(phi)
+    const clampedBank = clamp(currentRollRad, -1.15, 1.15);
+    const worldTurnRate = (env.gravity / Math.max(airspeed, 14.0)) *
+      Math.tan(clampedBank) * Math.cos(currentPitchRad) * aero.bankTurnCoordFactor;
+
+    // Project World +Y coordinated turn rate into aircraft Body Frame (+X pitch, +Y yaw)
+    const coordPitchRate = worldTurnRate * Math.sin(currentRollRad);
+    const coordYawRate = worldTurnRate * Math.cos(currentRollRad);
+
+    // Dynamic equilibrium trim AoA for level flight within the non-stalled cruise/high-speed envelope
+    const neutralPitchFactor =
+      Math.max(0.0, 1.0 - Math.abs(this.actuators.pitch) * 2.5) *
+      (1.0 - stallFactor) *
+      clamp((airspeed - this.config.envelope.stallSpeedMs * 1.05) / 6.0, 0.0, 1.0);
+    const cosBankSafe = Math.max(0.55, Math.cos(currentRollRad));
+    const eqCl = (af.totalMassKg * env.gravity) / Math.max(110.0, qBar * S * cosBankSafe);
+    const dynamicTrimAlpha = clamp((eqCl - aero.CL0) / aero.CLAlpha, -0.02, 0.14);
+    const targetTrimAlpha = lerp(aero.pitchTrimAlphaRad, dynamicTrimAlpha, neutralPitchFactor);
+
     // --- Pitch Torque (around +X) ---
     // Positive actuator.pitch = Nose UP (+X rotation)
-    const alphaError = alpha - aero.pitchTrimAlphaRad;
+    const alphaError = alpha - targetTrimAlpha;
     const staticPitchMoment = qBar * S * cBar * aero.CmAlpha * alphaError;
     const stallPitchDrop = stallFactor > 0.01
       ? Math.max(qBar, 80.0) * S * cBar * aero.CmStallNoseDown * stallFactor * Math.sign(alpha || 1.0)
       : 0.0;
-    const pitchDamping = -aero.CmQ * (-1.0) * pRate * aeroDampScale * 0.45;
     const elevatorTorque = this.actuators.pitch * aero.elevatorAuthority * controlEff * af.inertia.pitch;
 
-    // Slight bank-elevation compensation + gravity nose-drop when banked without back-stick
+    // Pitch attitude envelope restoring moment (prevents runaway vertical loops while allowing stalls)
+    const pitchAttitudeError = clamp(currentPitchRad - targetTrimAlpha, -0.85, 0.85);
+    const pitchAttitudeRestore =
+      -pitchAttitudeError * 2.4 * (1.0 - stallFactor) * Math.max(0.2, Math.cos(currentRollRad)) * af.inertia.pitch;
+
+    // Coordinated turn pitch-rate support + FBWA phugoid vertical-speed damping when elevator stick is neutral
+    const coordPitchTorque = (coordPitchRate - pRate) * Math.abs(aero.CmQ) * 0.35 * aeroDampScale;
+    const phugoidDampTorque =
+      -(this.velocity.y / Math.max(15.0, airspeed)) *
+      3.8 *
+      neutralPitchFactor *
+      Math.max(0.0, Math.cos(currentRollRad)) *
+      af.inertia.pitch;
+
     const pitchTorque =
       elevatorTorque +
       staticPitchMoment +
-      stallPitchDrop -
-      pRate * Math.abs(aero.CmQ) * 0.35 * aeroDampScale;
+      stallPitchDrop +
+      pitchAttitudeRestore +
+      coordPitchTorque +
+      phugoidDampTorque;
 
     // --- Roll Torque (around +Z) ---
     // Note: In Three.js body frame (+X right, +Y up, +Z aft):
     // Right-hand rule around +Z: positive rotation raises +X (right wing) -> banks LEFT.
     // Input convention: controls.roll > 0 is Bank RIGHT (D / Right Arrow / Right stick).
-    // Therefore, Bank RIGHT corresponds to negative Z angular acceleration!
-    const aileronTorque = -this.actuators.roll * aero.aileronAuthority * controlEff * af.inertia.roll;
+    // In FBWA mode, roll input commands a target bank angle up to maxBankAngleDeg (60 deg),
+    // and smoothly returns wings to level when roll input is centered.
+    const maxBankRad = (aero.maxBankAngleDeg || 60.0) * DEG2RAD;
+    const targetRollRad = -this.actuators.roll * maxBankRad;
+    const rollAngleError = targetRollRad - currentRollRad;
+    const effAileronCmd = clamp(rollAngleError * 1.95 - rRate * 0.22, -1.0, 1.0);
+
+    const aileronTorque = effAileronCmd * aero.aileronAuthority * controlEff * af.inertia.roll;
     const dihedralTorque = -qBar * S * b * aero.ClBeta * beta; // beta > 0 (slip right) -> raises right wing (+Z)
     const rollDamping = -rRate * Math.abs(aero.ClP) * 0.65 * aeroDampScale;
 
@@ -411,7 +464,15 @@ export class FlightPhysics {
         stallFactor * 2.4;
     }
 
-    const rollTorque = aileronTorque + dihedralTorque + rollDamping + stallRollBuffet;
+    const rollTorque =
+      aileronTorque +
+      dihedralTorque +
+      rollDamping +
+      stallRollBuffet;
+
+    this.surfaceDeflections.pitch = this.actuators.pitch;
+    this.surfaceDeflections.roll = -effAileronCmd;
+    this.surfaceDeflections.yaw = this.actuators.yaw;
 
     // --- Yaw Torque (around +Y) ---
     // Right-hand rule around +Y: positive rotation turns nose (-Z) LEFT (-X).
@@ -420,12 +481,7 @@ export class FlightPhysics {
     const rudderTorque = -this.actuators.yaw * aero.rudderAuthority * controlEff * af.inertia.yaw;
     const weathercockTorque = -qBar * S * b * aero.CnBeta * beta; // beta > 0 -> yaws nose right (-Y)
     const yawDamping = -qRate * Math.abs(aero.CnR) * 0.75 * aeroDampScale;
-
-    // Natural bank-to-turn yaw coordination: when banked right (currentRollRad < 0),
-    // horizontal component of lift curves heading right (-Y).
-    const bankTurnYawRate = (env.gravity / Math.max(airspeed, 12.0)) *
-      Math.sin(currentRollRad) * Math.cos(currentPitchRad) * aero.bankTurnCoordFactor;
-    const coordYawTorque = bankTurnYawRate * 2.6 * af.inertia.yaw * aeroDampScale;
+    const coordYawTorque = coordYawRate * 2.8 * af.inertia.yaw * aeroDampScale;
 
     const yawTorque = rudderTorque + weathercockTorque + yawDamping + coordYawTorque;
 

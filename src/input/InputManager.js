@@ -43,6 +43,7 @@ export class InputManager {
       onToggleControllerUI: callbacks.onToggleControllerUI || (() => {}),
       onRestart: callbacks.onRestart || (() => {}),
       onToggleArm: callbacks.onToggleArm || (() => {}),
+      onToggleFullscreen: callbacks.onToggleFullscreen || (() => {}),
       onGamepadStatusChange: callbacks.onGamepadStatusChange || (() => {})
     };
 
@@ -173,6 +174,7 @@ export class InputManager {
         else if (code === 'KeyC') this.callbacks.onToggleControllerUI();
         else if (code === 'KeyR') this.callbacks.onRestart();
         else if (code === 'KeyM') this.callbacks.onToggleArm();
+        else if (code === 'KeyF') this.callbacks.onToggleFullscreen();
       }
 
       this.keys.add(code);
@@ -406,12 +408,9 @@ export class InputManager {
         rcPitch = applyDeadzoneAndExpo(rawPitchAxis, p.deadzone, p.expo, p.invert.pitch);
         rcYaw = applyDeadzoneAndExpo(rawYawAxis, p.deadzone, p.expo, p.invert.yaw);
 
-        // Activate RC throttle once the physical throttle axis moves or is non-zero
+        // Activate RC throttle once the physical throttle axis moves
         if (this._lastThrottleAxisVal === null) {
           this._lastThrottleAxisVal = rawThrottleAxis;
-          if (Math.abs(rawThrottleAxis) > 0.05) {
-            this._rcThrottleActive = true;
-          }
         } else if (Math.abs(rawThrottleAxis - this._lastThrottleAxisVal) > 0.015) {
           this._rcThrottleActive = true;
           this._lastThrottleAxisVal = rawThrottleAxis;

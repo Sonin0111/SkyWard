@@ -66,10 +66,10 @@ export class EnemyReconAI {
     this.patternName = PATTERN_TYPES[rng.int(0, PATTERN_TYPES.length - 1)];
     this.waypoints = [];
 
-    // First waypoint is placed 340m - 580m in the forward northern sector from player spawn
+    // First waypoint is placed 240m - 380m in the forward northern sector from player spawn
     // so the player can visually acquire, track, and intercept the target in FPV view.
-    const startBearing = rng.range(-0.26, 0.26); // ~ -15 deg to +15 deg off North
-    const startDist = rng.range(340.0, 580.0);
+    const startBearing = rng.range(-0.18, 0.18); // ~ -10 deg to +10 deg off North
+    const startDist = rng.range(240.0, 380.0);
     const startX = Math.sin(startBearing) * startDist;
     const startZ = this.config.spawn.z - Math.cos(startBearing) * startDist;
 
