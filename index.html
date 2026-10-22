@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyWard — 3D Fixed-Wing UAV Interceptor Flight Simulator</title>
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
+<body>
+  <!-- 3D WebGL Viewport Canvas -->
+  <canvas id="viewport-canvas"></canvas>
+
+  <!-- 2D Tactical Military OSD Overlay Canvas -->
+  <canvas id="osd-canvas"></canvas>
+
+  <!-- Top Tactical Command & Telemetry Toolbar -->
+  <header id="top-bar">
+    <div class="brand-block">
+      <span class="brand-logo">SKYWARD</span>
+      <span class="brand-sub">FIXED-WING UAV INTERCEPTOR SIMULATOR</span>
+      <span id="fps-badge" class="pill-badge">60 FPS</span>
+      <span id="rc-status-pill" class="pill-badge">RC: Keyboard (Plug TX12 USB)</span>
+    </div>
+
+    <div class="toolbar-controls">
+      <button id="btn-cam-view" class="hud-btn" title="Toggle FPV Nose Cam / 3rd Person Chase Cam (V)">View: FPV [V]</button>
+      <button id="btn-optical-mode" class="hud-btn" title="Toggle Daylight / Thermal FLIR White-Hot / Black-Hot (T)">Optic: FLIR W-Hot [T]</button>
+      <button id="btn-controller-ui" class="hud-btn" title="Open RadioMaster TX12 / EdgeTX Controller Mapping (C)">RC Config [C]</button>
+      <button id="btn-detonate" class="hud-btn hud-btn-danger" title="Detonate Warhead (Space)">Detonate [Space]</button>
+
+      <div class="seed-group">
+        <label for="seed-input">Seed:</label>
+        <input id="seed-input" type="text" value="20261022" class="hud-input" title="Scenario Random Seed for reproducible routes" />
+        <button id="btn-apply-seed" class="hud-btn hud-btn-sm" title="Load Scenario with this Seed">Load</button>
+      </div>
+
+      <button id="btn-restart" class="hud-btn hud-btn-primary" title="Restart Mission with Newly Generated Target Route (R)">New Mission [R]</button>
+
+      <select id="quality-select" class="hud-select" title="Graphics Quality Preset">
+        <option value="Low">Quality: Low</option>
+        <option value="Medium" selected>Quality: Medium</option>
+        <option value="High">Quality: High</option>
+      </select>
+
+      <button id="btn-verify-specs" class="hud-btn hud-btn-sm" title="Run Automated Flight Physics & Systems Verification Suite">Verify Specs</button>
+    </div>
+  </header>
+
+  <!-- Collapsible RC Transmitter & Controller Configuration Panel (Toggle via 'C') -->
+  <section id="controller-modal" class="modal-panel hidden" aria-label="Controller Configuration"></section>
+
+  <!-- Mission Results Overlay Modal -->
+  <section id="results-modal" class="modal-panel results-panel hidden" aria-label="Mission Results">
+    <div class="results-header">
+      <div class="results-tag">AFTER-ACTION INTERCEPTION REPORT</div>
+      <h2 id="res-title" class="res-title-success">INTERCEPTION SUCCESSFUL</h2>
+      <p id="res-subtitle" class="res-subtitle"></p>
+    </div>
+
+    <div class="results-metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">FLIGHT DURATION</span>
+        <span id="res-duration" class="metric-value">0m 00.0s</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">DETONATION PROXIMITY</span>
+        <span id="res-distance" class="metric-value">0.0 m</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">AIRSPEED PERFORMANCE</span>
+        <span id="res-max-speed" class="metric-value">110.0 km/h</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">INTERCEPTION ALTITUDE</span>
+        <span id="res-altitude" class="metric-value">360 m MSL</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">BATTERY CONSUMPTION</span>
+        <span id="res-battery" class="metric-value">0.0%</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">SCENARIO SEED & PATTERN</span>
+        <span id="res-seed" class="metric-value">20261022</span>
+      </div>
+    </div>
+
+    <div class="results-actions">
+      <button id="res-btn-new-mission" class="hud-btn hud-btn-primary hud-btn-lg">Launch New Mission (New Route) [R]</button>
+      <button id="res-btn-replay-seed" class="hud-btn hud-btn-lg">Replay Same Seed</button>
+    </div>
+  </section>
+
+  <!-- Automated Physics & Systems Diagnostics Modal -->
+  <section id="diagnostics-modal" class="modal-panel diag-panel hidden" aria-label="Physics Verification Results">
+    <div class="ctrl-panel-header">
+      <div>
+        <h2 class="ctrl-title">FLIGHT PHYSICS & SYSTEMS VERIFICATION SUITE</h2>
+        <div class="ctrl-subtitle">Real-time execution against SW-15 Interceptor UAV technical specifications</div>
+      </div>
+      <button id="diag-close-btn" class="hud-btn hud-btn-primary">Close</button>
+    </div>
+    <div id="diag-results-list" class="diag-list"></div>
+  </section>
+
+  <!-- Fatal Error Banner -->
+  <div id="fatal-error-banner" class="fatal-banner hidden"></div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

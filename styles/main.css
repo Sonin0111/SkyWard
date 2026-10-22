@@ -1,0 +1,573 @@
+/* SkyWard — Military Tactical HUD & Simulator Styles */
+:root {
+  --hud-green: #38ff88;
+  --hud-green-dim: rgba(56, 255, 136, 0.32);
+  --hud-bg: rgba(7, 15, 13, 0.84);
+  --hud-panel-bg: rgba(9, 19, 17, 0.93);
+  --hud-amber: #ffaa11;
+  --hud-red: #ff3838;
+  --hud-text: #d9f8e6;
+  --font-mono: "JetBrains Mono", "Consolas", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #050a09;
+  font-family: var(--font-mono);
+  color: var(--hud-text);
+}
+
+#viewport-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  display: block;
+}
+
+#osd-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Top Command Bar */
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 44px;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(6, 14, 12, 0.92) 0%, rgba(6, 14, 12, 0.68) 100%);
+  border-bottom: 1px solid var(--hud-green-dim);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--hud-green);
+  text-shadow: 0 0 8px rgba(56, 255, 136, 0.45);
+}
+
+.brand-sub {
+  font-size: 10px;
+  color: rgba(217, 248, 230, 0.72);
+  letter-spacing: 0.8px;
+}
+
+.pill-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--hud-green-dim);
+  background: rgba(16, 36, 28, 0.65);
+  color: var(--hud-green);
+  border-radius: 3px;
+}
+
+.pill-badge.rc-connected {
+  background: rgba(32, 95, 56, 0.78);
+  border-color: var(--hud-green);
+  font-weight: 700;
+}
+
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hud-btn {
+  background: rgba(16, 36, 29, 0.82);
+  color: var(--hud-text);
+  border: 1px solid var(--hud-green-dim);
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.hud-btn:hover {
+  background: rgba(36, 86, 64, 0.9);
+  border-color: var(--hud-green);
+  color: #ffffff;
+}
+
+.hud-btn-primary {
+  background: rgba(28, 92, 58, 0.88);
+  border-color: var(--hud-green);
+  color: var(--hud-green);
+}
+
+.hud-btn-danger {
+  background: rgba(95, 22, 22, 0.85);
+  border-color: rgba(255, 56, 56, 0.65);
+  color: #ff9999;
+}
+
+.hud-btn-danger:hover {
+  background: rgba(160, 28, 28, 0.95);
+  border-color: var(--hud-red);
+  color: #ffffff;
+}
+
+.hud-btn-sm {
+  padding: 3px 8px;
+  font-size: 10px;
+}
+
+.hud-btn-lg {
+  padding: 9px 18px;
+  font-size: 12px;
+}
+
+.hud-btn.listening {
+  background: var(--hud-amber);
+  color: #050a08;
+  border-color: #ffffff;
+}
+
+.seed-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: rgba(10, 22, 18, 0.75);
+  padding: 2px 6px;
+  border: 1px solid var(--hud-green-dim);
+  border-radius: 3px;
+}
+
+.hud-input {
+  width: 82px;
+  background: rgba(4, 10, 8, 0.9);
+  border: 1px solid rgba(56, 255, 136, 0.25);
+  color: var(--hud-green);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 5px;
+  user-select: text;
+}
+
+.hud-select {
+  background: rgba(14, 30, 24, 0.9);
+  color: var(--hud-text);
+  border: 1px solid var(--hud-green-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+/* Controls Legend Overlay */
+#controls-legend {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 8;
+  background: rgba(8, 16, 14, 0.68);
+  border: 1px solid var(--hud-green-dim);
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1.65;
+  pointer-events: none;
+}
+
+.legend-title {
+  color: var(--hud-green);
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: 0.8px;
+}
+
+.legend-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  color: rgba(217, 248, 230, 0.86);
+}
+
+kbd {
+  background: rgba(28, 56, 44, 0.85);
+  border: 1px solid rgba(56, 255, 136, 0.4);
+  border-radius: 2px;
+  padding: 0px 4px;
+  color: var(--hud-green);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+}
+
+/* Modal Panels (Controller Configuration, Results, Diagnostics) */
+.modal-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  background: var(--hud-panel-bg);
+  border: 1.5px solid var(--hud-green);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.82);
+  border-radius: 6px;
+  padding: 18px 22px;
+  width: min(880px, 94vw);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.ctrl-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid var(--hud-green-dim);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.ctrl-title {
+  font-size: 15px;
+  color: var(--hud-green);
+  letter-spacing: 1px;
+}
+
+.ctrl-subtitle {
+  font-size: 11px;
+  color: rgba(217, 248, 230, 0.78);
+  margin-top: 3px;
+}
+
+.ctrl-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ctrl-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 20px;
+}
+
+@media (max-width: 760px) {
+  .ctrl-grid {
+    grid-template-columns: 1fr;
+  }
+  #controls-legend {
+    display: none;
+  }
+}
+
+.ctrl-section h3 {
+  font-size: 11.5px;
+  color: var(--hud-green);
+  margin-bottom: 8px;
+  letter-spacing: 0.6px;
+}
+
+.ctrl-hint {
+  font-size: 10px;
+  color: rgba(217, 248, 230, 0.68);
+  margin-bottom: 10px;
+}
+
+.axes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.axis-bar-row {
+  display: grid;
+  grid-template-columns: 95px 1fr 46px;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+}
+
+.axis-bar-track {
+  position: relative;
+  height: 11px;
+  background: rgba(4, 10, 8, 0.9);
+  border: 1px solid var(--hud-green-dim);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.axis-bar-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.35);
+  z-index: 2;
+}
+
+.axis-bar-fill {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #1b8a4b, #38ff88);
+  transition: width 0.04s linear;
+}
+
+.axis-num {
+  text-align: right;
+  color: var(--hud-green);
+}
+
+.buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+}
+
+.btn-badge {
+  text-align: center;
+  font-size: 10px;
+  padding: 5px 2px;
+  background: rgba(6, 14, 12, 0.85);
+  border: 1px solid rgba(56, 255, 136, 0.25);
+  border-radius: 3px;
+  color: rgba(217, 248, 230, 0.55);
+}
+
+.btn-badge.active {
+  background: var(--hud-green);
+  color: #041009;
+  font-weight: 800;
+  border-color: #ffffff;
+}
+
+.mapping-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.map-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(6, 14, 12, 0.65);
+  border: 1px solid rgba(56, 255, 136, 0.18);
+  padding: 6px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.map-name {
+  flex: 1;
+}
+
+.invert-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.sw-binding-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  background: rgba(22, 52, 38, 0.8);
+  border: 1px solid var(--hud-green-dim);
+  color: var(--hud-green);
+  border-radius: 3px;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 155px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+
+.mono-val {
+  text-align: right;
+  color: var(--hud-green);
+  font-weight: 700;
+}
+
+/* Mission Results Panel */
+.results-panel {
+  width: min(640px, 92vw);
+  text-align: center;
+}
+
+.results-panel.fade-in {
+  animation: resultsFadeIn 0.55s ease-out forwards;
+}
+
+@keyframes resultsFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.results-tag {
+  font-size: 10.5px;
+  letter-spacing: 1.5px;
+  color: rgba(217, 248, 230, 0.68);
+  margin-bottom: 6px;
+}
+
+.res-title-success {
+  font-size: 20px;
+  color: var(--hud-green);
+  margin-bottom: 6px;
+}
+
+.res-title-fail {
+  font-size: 20px;
+  color: var(--hud-red);
+  margin-bottom: 6px;
+}
+
+.res-subtitle {
+  font-size: 12px;
+  color: rgba(217, 248, 230, 0.88);
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+
+.results-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.metric-card {
+  background: rgba(5, 12, 10, 0.82);
+  border: 1px solid var(--hud-green-dim);
+  padding: 9px 12px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 9.5px;
+  color: rgba(217, 248, 230, 0.62);
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hud-green);
+}
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Diagnostics Modal */
+.diag-panel {
+  width: min(740px, 94vw);
+}
+
+.diag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diag-item {
+  background: rgba(5, 12, 10, 0.85);
+  border: 1px solid var(--hud-green-dim);
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.diag-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.diag-status-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+
+.diag-pass .diag-status-badge {
+  background: var(--hud-green);
+  color: #031008;
+}
+
+.diag-fail .diag-status-badge {
+  background: var(--hud-red);
+  color: #ffffff;
+}
+
+.diag-item-details {
+  font-size: 10.5px;
+  color: rgba(217, 248, 230, 0.8);
+}
+
+.fatal-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--hud-red);
+  color: #ffffff;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 100;
+  text-align: center;
+}
