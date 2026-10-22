@@ -23,7 +23,8 @@ export class TouchControlsUI {
       onToggleThermal: callbacks.onToggleThermal || (() => {}),
       onRestart: callbacks.onRestart || (() => {}),
       onToggleFullscreen: callbacks.onToggleFullscreen || (() => {}),
-      onEnterFullscreenLandscape: callbacks.onEnterFullscreenLandscape || (() => {})
+      onEnterFullscreenLandscape: callbacks.onEnterFullscreenLandscape || (() => {}),
+      onGimbalTouch: callbacks.onGimbalTouch || (() => {})
     };
 
     // Detect mobile / touchscreen capability via User-Agent, UA-CH, Coarse Pointer, or Touch Points
@@ -68,16 +69,19 @@ export class TouchControlsUI {
       <!-- Left Mode 2 Gimbal: Throttle (Non-Centering Y) & Yaw (Spring-Centering X) -->
       <div class="touch-cluster touch-cluster-left">
         <div class="touch-quick-btns">
-          <button id="touch-btn-view" class="touch-action-btn" type="button">CAM [V]</button>
-          <button id="touch-btn-optic" class="touch-action-btn" type="button">FLIR [T]</button>
-          <button id="touch-btn-fullscreen" class="touch-action-btn" type="button">FULL [F]</button>
+          <button id="touch-btn-view" class="touch-action-btn" type="button">VIEW: FPV</button>
+          <button id="touch-btn-optic" class="touch-action-btn" type="button">FLIR: W-HOT</button>
+          <button id="touch-btn-fullscreen" class="touch-action-btn" type="button">⛶ FULL</button>
         </div>
         <div id="touch-gimbal-left" class="touch-gimbal" data-side="left">
+          <div class="gimbal-ring-inner"></div>
           <div class="gimbal-grid-h"></div>
           <div class="gimbal-grid-v"></div>
           <div class="gimbal-throttle-ticks"></div>
-          <div id="touch-knob-left" class="touch-knob"></div>
-          <span class="gimbal-caption">THR / YAW</span>
+          <div id="touch-knob-left" class="touch-knob">
+            <div class="touch-knob-core"></div>
+          </div>
+          <span id="gimbal-caption-left" class="gimbal-caption">THR 58% · YAW</span>
         </div>
       </div>
 
@@ -85,13 +89,16 @@ export class TouchControlsUI {
       <div class="touch-cluster touch-cluster-right">
         <div class="touch-quick-btns">
           <button id="touch-btn-detonate" class="touch-action-btn touch-btn-detonate" type="button">DETONATE</button>
-          <button id="touch-btn-restart" class="touch-action-btn" type="button">RESET</button>
+          <button id="touch-btn-restart" class="touch-action-btn" type="button">↻ MISSION</button>
         </div>
         <div id="touch-gimbal-right" class="touch-gimbal" data-side="right">
+          <div class="gimbal-ring-inner"></div>
           <div class="gimbal-grid-h"></div>
           <div class="gimbal-grid-v"></div>
-          <div id="touch-knob-right" class="touch-knob"></div>
-          <span class="gimbal-caption">PITCH / ROLL</span>
+          <div id="touch-knob-right" class="touch-knob">
+            <div class="touch-knob-core"></div>
+          </div>
+          <span id="gimbal-caption-right" class="gimbal-caption">PITCH · ROLL</span>
         </div>
       </div>
 
@@ -110,6 +117,8 @@ export class TouchControlsUI {
     this.rightGimbalEl = this.container.querySelector('#touch-gimbal-right');
     this.leftKnobEl = this.container.querySelector('#touch-knob-left');
     this.rightKnobEl = this.container.querySelector('#touch-knob-right');
+    this.leftCaptionEl = this.container.querySelector('#gimbal-caption-left');
+    this.detonateBtnEl = this.container.querySelector('#touch-btn-detonate');
     this.orientationPromptEl = this.container.querySelector('#orientation-prompt');
   }
 
@@ -199,6 +208,7 @@ export class TouchControlsUI {
       e.preventDefault();
       e.stopPropagation();
       this._tryLockLandscape();
+      this.callbacks.onGimbalTouch();
 
       try {
         gimbalEl.setPointerCapture(e.pointerId);
@@ -273,6 +283,10 @@ export class TouchControlsUI {
       this.leftKnobEl.style.transform = `translate(calc(-50% + ${lxPx.toFixed(1)}px), calc(-50% + ${lyPx.toFixed(1)}px))`;
     }
 
+    if (this.leftCaptionEl) {
+      this.leftCaptionEl.textContent = `THR ${Math.round(this.leftThrottle * 100)}% · YAW`;
+    }
+
     if (this.rightKnobEl) {
       const travelR = this.rightGimbalEl && this.rightGimbalEl.clientWidth > 0
         ? this.rightGimbalEl.clientWidth * 0.34
@@ -280,6 +294,28 @@ export class TouchControlsUI {
       const rxPx = this.rightRoll * travelR;
       const ryPx = this.rightPitch * travelR;
       this.rightKnobEl.style.transform = `translate(calc(-50% + ${rxPx.toFixed(1)}px), calc(-50% + ${ryPx.toFixed(1)}px))`;
+    }
+  }
+
+  /**
+   * Updates mobile button states (FPV/Chase label, Optical FLIR label, and In-Range Detonate pulse).
+   */
+  updateStatusBadges({ viewMode, opticalMode, inRange }) {
+    const viewBtn = this.container.querySelector('#touch-btn-view');
+    if (viewBtn && viewMode) {
+      viewBtn.textContent = viewMode === 'FPV' ? 'VIEW: FPV' : 'VIEW: CHASE';
+    }
+    const opticBtn = this.container.querySelector('#touch-btn-optic');
+    if (opticBtn && opticalMode) {
+      opticBtn.textContent =
+        opticalMode === 'DAY'
+          ? 'OPTIC: DAY'
+          : opticalMode === 'WHITE_HOT'
+          ? 'FLIR: W-HOT'
+          : 'FLIR: B-HOT';
+    }
+    if (this.detonateBtnEl) {
+      this.detonateBtnEl.classList.toggle('in-range-pulse', Boolean(inRange));
     }
   }
 
@@ -320,6 +356,8 @@ export class TouchControlsUI {
   updateVisibility() {
     const show = this.enabled && !this.hiddenForDetonation;
     this.container.classList.toggle('hidden', !show);
+    const isMobileMode = Boolean(this.isMobile || this.enabled || window.innerWidth <= 960 || window.innerHeight <= 540);
+    document.body.classList.toggle('mobile-ui', isMobileMode);
     const btn = document.getElementById('btn-touch-rc');
     if (btn) {
       btn.classList.toggle('hud-btn-primary', this.enabled);

@@ -72,10 +72,17 @@ export class TacticalOSD {
     const inRange = distToTargetM <= 15.0;
 
     // Scale OSD elements proportionally to viewport while preserving crisp MAX7456 proportions
-    const scale = clamp(Math.min(w / 1280, h / 720), 0.78, 1.35);
-    const marginX = Math.round(w * 0.035);
-    const topY = Math.round(Math.max(82, h * 0.095)); // Clean margin below top toolbar
-    const bottomY = Math.round(h - Math.max(36, h * 0.065));
+    const scale = clamp(Math.min(w / 1280, h / 720), 0.72, 1.35);
+    const marginX = Math.round(w * 0.032);
+    const isMobileUI = document.body.classList.contains('mobile-ui');
+    const isTopBarOpen = document.getElementById('top-bar')?.classList.contains('mobile-topbar-open');
+    const topBarVisible = !isMobileUI || isTopBarOpen;
+
+    const topY = topBarVisible
+      ? Math.round(Math.max(76, h * 0.095))
+      : Math.round(Math.max(18, h * 0.042));
+    const topRightX = isMobileUI ? w - marginX - Math.round(48 * scale) : w - marginX;
+    const bottomY = Math.round(h - Math.max(24, h * 0.052));
     const cx = w * 0.5;
     const cy = h * 0.5;
 
@@ -87,7 +94,7 @@ export class TacticalOSD {
     this._drawTopCenterStatus(ctx, cx, topY + 22 * scale, inRange, scale);
 
     // 3. TOP-RIGHT: Battery Icon + Real-time 6S Voltage ("21.5 v")
-    this._drawTopRightBattery(ctx, w - marginX, topY, telemetry.batteryVoltage, scale);
+    this._drawTopRightBattery(ctx, topRightX, topY, telemetry.batteryVoltage, scale);
 
     // 4. CENTER: Minimalist Diamond Reticle (· ◊ ·) + Dotted Artificial Horizon (·  ·  ·  ·  ·)
     this._drawCenterReticleAndDottedHorizon(ctx, cx, cy, telemetry.pitchDeg, telemetry.rollDeg, scale);

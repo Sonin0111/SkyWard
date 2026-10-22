@@ -69,7 +69,8 @@ class SkyWardSimulator {
         onToggleThermal: () => this.toggleOpticalMode(),
         onRestart: () => this.restartWithNewSeed(),
         onToggleFullscreen: () => this.toggleFullscreen(),
-        onEnterFullscreenLandscape: () => this.enterFullscreen(true)
+        onEnterFullscreenLandscape: () => this.enterFullscreen(true),
+        onGimbalTouch: () => this.setMobileTopBarOpen(false)
       }
     );
 
@@ -186,6 +187,12 @@ class SkyWardSimulator {
           : 'Optic: FLIR B-Hot [T]';
     }
 
+    this.touchUI?.updateStatusBadges({
+      viewMode: this.cameraSystem.viewMode,
+      opticalMode: this.cameraSystem.opticalMode,
+      inRange: false
+    });
+
     // Reset gameplay state
     this.interceptionState.warheadArmed = false;
     this.interceptionState.manualArmOverride = false;
@@ -212,6 +219,7 @@ class SkyWardSimulator {
     const mode = this.cameraSystem.toggleViewMode();
     const btn = document.getElementById('btn-cam-view');
     if (btn) btn.textContent = mode === 'FPV' ? 'View: FPV [V]' : 'View: Chase [V]';
+    this.touchUI?.updateStatusBadges({ viewMode: mode });
   }
 
   toggleOpticalMode() {
@@ -228,6 +236,7 @@ class SkyWardSimulator {
           ? 'Optic: FLIR W-Hot [T]'
           : 'Optic: FLIR B-Hot [T]';
     }
+    this.touchUI?.updateStatusBadges({ opticalMode: mode });
   }
 
   toggleManualArm() {
@@ -384,6 +393,8 @@ class SkyWardSimulator {
       } else {
         st.statusLabel = 'SEARCHING / TRACKING';
       }
+
+      this.touchUI?.updateStatusBadges({ inRange: distM <= icfg.optimalKillRadiusM });
     } else if (!st.resultsShown) {
       // Wait 3.8 seconds (within 3.5 - 4.0s requirement) showing external thermal spectator view
       // before fading in the Mission Results / Restart UI overlay
@@ -496,6 +507,10 @@ class SkyWardSimulator {
   }
 
   _bindUIControls() {
+    document.getElementById('btn-mobile-topbar-toggle')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleMobileTopBar();
+    });
     document.getElementById('btn-fullscreen')?.addEventListener('click', () => this.toggleFullscreen());
     document.getElementById('btn-cam-view')?.addEventListener('click', () => this.toggleCameraView());
     document.getElementById('btn-optical-mode')?.addEventListener('click', () => this.toggleOpticalMode());
@@ -699,6 +714,27 @@ class SkyWardSimulator {
     }
   }
 
+  setMobileTopBarOpen(open) {
+    const topBar = document.getElementById('top-bar');
+    const toggleBtn = document.getElementById('btn-mobile-topbar-toggle');
+    const isOpen = Boolean(open);
+    if (topBar) {
+      topBar.classList.toggle('mobile-topbar-open', isOpen);
+    }
+    if (toggleBtn) {
+      toggleBtn.textContent = isOpen ? '✕' : '☰';
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+      toggleBtn.classList.toggle('active', isOpen);
+    }
+  }
+
+  toggleMobileTopBar() {
+    const topBar = document.getElementById('top-bar');
+    const currentlyOpen = Boolean(topBar && topBar.classList.contains('mobile-topbar-open'));
+    this.setMobileTopBarOpen(!currentlyOpen);
+    return !currentlyOpen;
+  }
+
   _updateFullscreenButtonState() {
     const active = this.isFullscreen();
     const topBtn = document.getElementById('btn-fullscreen');
@@ -708,7 +744,7 @@ class SkyWardSimulator {
     }
     const touchBtn = document.getElementById('touch-btn-fullscreen');
     if (touchBtn) {
-      touchBtn.textContent = active ? 'EXIT FULL' : 'FULL [F]';
+      touchBtn.textContent = active ? '⛶ EXIT' : '⛶ FULL';
     }
   }
 

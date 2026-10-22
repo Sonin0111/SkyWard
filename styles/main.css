@@ -577,7 +577,66 @@ kbd {
 }
 
 /* ==========================================================================
-   Mobile & Touchscreen Virtual RC Joysticks (Mode 2 AETR Layout)
+   Mobile Upper-Right Top-Bar Toggle & Collapsible Mobile Command Drawer
+   ========================================================================== */
+.mobile-topbar-toggle {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  z-index: 25;
+  width: 36px;
+  height: 36px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 20, 16, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffffff;
+  border: 1.5px solid rgba(56, 255, 136, 0.55);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.65);
+  transition: all 0.16s ease;
+}
+
+.mobile-topbar-toggle:hover,
+.mobile-topbar-toggle.active {
+  background: rgba(24, 72, 48, 0.92);
+  border-color: var(--hud-green);
+  color: var(--hud-green);
+}
+
+/* On mobile devices (or when mobile-ui mode is active), hide #top-bar by default
+   and show the upper-right corner toggle button */
+body.mobile-ui .mobile-topbar-toggle {
+  display: flex;
+}
+
+body.mobile-ui #top-bar {
+  display: none;
+  top: 8px;
+  left: 12px;
+  right: 56px;
+  border: 1.5px solid var(--hud-green);
+  border-radius: 10px;
+  background: rgba(6, 15, 12, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 10px 14px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.85);
+}
+
+body.mobile-ui #top-bar.mobile-topbar-open {
+  display: flex;
+}
+
+/* ==========================================================================
+   Redesigned Mobile & Touchscreen Virtual RC Joysticks (Mode 2 AETR Layout)
    ========================================================================== */
 .touch-controls-layer {
   position: fixed;
@@ -588,108 +647,162 @@ kbd {
 
 .touch-cluster {
   position: absolute;
-  bottom: 22px;
+  bottom: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   pointer-events: auto;
 }
 
 .touch-cluster-left {
-  left: 205px;
+  left: 196px;
 }
 
 .touch-cluster-right {
-  right: 165px;
+  right: 148px;
 }
 
 .touch-quick-btns {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
+  background: rgba(6, 15, 12, 0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 4px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
 }
 
 .touch-action-btn {
-  background: rgba(10, 24, 19, 0.72);
+  background: rgba(14, 34, 26, 0.78);
   color: #ffffff;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(56, 255, 136, 0.45);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 4px;
+  letter-spacing: 0.4px;
+  padding: 6px 11px;
+  border-radius: 14px;
   cursor: pointer;
   touch-action: none;
   text-shadow: 0 1px 2px #000000;
+  transition: transform 0.08s ease, background 0.12s ease;
 }
 
 .touch-action-btn:active {
-  background: rgba(56, 255, 136, 0.45);
-  border-color: var(--hud-green);
+  background: rgba(56, 255, 136, 0.48);
+  border-color: #ffffff;
+  transform: scale(0.95);
 }
 
 .touch-btn-detonate {
-  background: rgba(165, 24, 24, 0.85);
-  border-color: #ff6666;
+  background: linear-gradient(180deg, rgba(205, 32, 32, 0.92) 0%, rgba(135, 16, 16, 0.92) 100%);
+  border: 1.5px solid #ff7777;
   color: #ffffff;
-  padding: 6px 14px;
+  padding: 6px 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  box-shadow: 0 0 12px rgba(255, 48, 48, 0.42);
+}
+
+.touch-btn-detonate.in-range-pulse {
+  animation: detonatePulse 0.42s infinite alternate;
+}
+
+@keyframes detonatePulse {
+  from {
+    background: #ff2222;
+    border-color: #ffffff;
+    box-shadow: 0 0 16px rgba(255, 56, 56, 0.9);
+    transform: scale(1.03);
+  }
+  to {
+    background: #aa1111;
+    border-color: #ffaa11;
+    box-shadow: 0 0 6px rgba(255, 170, 17, 0.5);
+    transform: scale(0.98);
+  }
 }
 
 .touch-btn-detonate:active {
-  background: #ff2222;
+  background: #ff1111;
   border-color: #ffffff;
+  transform: scale(0.94);
 }
 
+/* Circular Precision Mode-2 RC Gimbal Assembly */
 .touch-gimbal {
   position: relative;
-  width: 132px;
-  height: 132px;
-  background: rgba(8, 16, 14, 0.36);
-  border: 1.5px solid rgba(255, 255, 255, 0.48);
-  border-radius: 14px;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+  width: 144px;
+  height: 144px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(10, 26, 20, 0.16) 0%,
+    rgba(6, 16, 13, 0.38) 72%,
+    rgba(18, 46, 36, 0.54) 100%
+  );
+  border: 1.8px solid rgba(255, 255, 255, 0.46);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 22px rgba(0, 0, 0, 0.65),
+    0 4px 16px rgba(0, 0, 0, 0.45);
   touch-action: none;
   cursor: grab;
 }
 
 .touch-gimbal.gimbal-active {
   border-color: var(--hud-green);
-  background: rgba(14, 32, 26, 0.48);
+  box-shadow:
+    inset 0 0 24px rgba(56, 255, 136, 0.22),
+    0 0 14px rgba(56, 255, 136, 0.35);
+}
+
+.gimbal-ring-inner {
+  position: absolute;
+  top: 22%;
+  left: 22%;
+  width: 56%;
+  height: 56%;
+  border: 1px dashed rgba(255, 255, 255, 0.24);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .gimbal-grid-h {
   position: absolute;
-  left: 12px;
-  right: 12px;
+  left: 12%;
+  right: 12%;
   top: 50%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.24);
   pointer-events: none;
 }
 
 .gimbal-grid-v {
   position: absolute;
-  top: 12px;
-  bottom: 12px;
+  top: 12%;
+  bottom: 12%;
   left: 50%;
   width: 1px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.24);
   pointer-events: none;
 }
 
 .gimbal-throttle-ticks {
   position: absolute;
-  top: 16px;
-  bottom: 16px;
+  top: 16%;
+  bottom: 16%;
   left: 50%;
-  width: 14px;
+  width: 16px;
   transform: translateX(-50%);
   background: repeating-linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.28) 0px,
-    rgba(255, 255, 255, 0.28) 1px,
-    transparent 1px,
-    transparent 10px
+    rgba(56, 255, 136, 0.42) 0px,
+    rgba(56, 255, 136, 0.42) 1.5px,
+    transparent 1.5px,
+    transparent 9px
   );
   pointer-events: none;
 }
@@ -698,30 +811,47 @@ kbd {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #b8d8c8 55%, #2b5442 100%);
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #c8e6d8 48%, #214a38 100%);
   border: 2px solid #000000;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
 }
 
+.touch-knob-core {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.35);
+}
+
 .gimbal-active .touch-knob {
-  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #38ff88 65%, #126636 100%);
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #38ff88 62%, #0e592d 100%);
+  box-shadow: 0 0 14px rgba(56, 255, 136, 0.75);
 }
 
 .gimbal-caption {
   position: absolute;
-  bottom: -17px;
-  left: 0;
-  right: 0;
+  bottom: -20px;
+  left: -10px;
+  right: -10px;
   text-align: center;
   font-size: 9.5px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.78);
-  text-shadow: 1px 1px 0 #000000;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+  text-shadow:
+    -1px -1px 0 #000,
+     1px -1px 0 #000,
+    -1px  1px 0 #000,
+     1px  1px 0 #000;
   pointer-events: none;
 }
 
@@ -766,45 +896,89 @@ kbd {
   margin-bottom: 16px;
 }
 
-/* Mobile Landscape Compact Adjustments */
-@media (max-width: 960px), (max-height: 540px) {
-  #top-bar {
-    min-height: 34px;
-    padding: 2px 8px;
-    gap: 5px;
+/* Mobile & Landscape Viewport Responsive Layout */
+@media (max-width: 960px), (max-height: 540px), (pointer: coarse) {
+  .mobile-topbar-toggle {
+    display: flex;
   }
+
+  #top-bar {
+    display: none;
+    top: 8px;
+    left: 10px;
+    right: 54px;
+    border: 1.5px solid var(--hud-green);
+    border-radius: 10px;
+    background: rgba(6, 15, 12, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 12px;
+    gap: 6px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85);
+  }
+
+  #top-bar.mobile-topbar-open {
+    display: flex;
+  }
+
   .brand-sub {
     display: none;
   }
+
   .hud-btn {
-    padding: 3px 7px;
-    font-size: 10px;
+    padding: 5px 9px;
+    font-size: 10.5px;
   }
+
   .touch-gimbal {
-    width: 114px;
-    height: 114px;
+    width: clamp(112px, 26vh, 138px);
+    height: clamp(112px, 26vh, 138px);
   }
+
   .touch-knob {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
+
   .touch-cluster-left {
     left: 155px;
-    bottom: 16px;
+    bottom: 18px;
   }
+
   .touch-cluster-right {
     right: 120px;
-    bottom: 16px;
+    bottom: 18px;
+  }
+
+  /* Compact 3-column results modal on short mobile landscape screens */
+  .results-panel {
+    padding: 12px 16px;
+    width: min(680px, 94vw);
+  }
+
+  .results-metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin-bottom: 12px;
+  }
+
+  .metric-card {
+    padding: 6px 8px;
+  }
+
+  .res-subtitle {
+    margin-bottom: 10px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 680px) {
   .touch-cluster-left {
     left: 18px;
-    bottom: 72px;
+    bottom: 68px;
   }
   .touch-cluster-right {
     right: 18px;
-    bottom: 72px;
+    bottom: 68px;
   }
 }
