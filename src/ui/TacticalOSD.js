@@ -100,10 +100,13 @@ export class TacticalOSD {
     this._drawCenterReticleAndDottedHorizon(ctx, cx, cy, telemetry.pitchDeg, telemetry.rollDeg, scale);
 
     // 5. MIDDLE-RIGHT (Stacked): Altitude ("3179 Alt/m") above Vertical Speed ("▲ 6.8 m/s")
+    const altTopY = isMobileUI
+      ? Math.round(topY + 46 * scale)
+      : Math.round(cy + 10 * scale);
     this._drawMiddleRightAltAndVSI(
       ctx,
       w - marginX,
-      cy + 10 * scale,
+      altTopY,
       Math.round(telemetry.altitudeMSL),
       telemetry.verticalSpeedMs,
       scale

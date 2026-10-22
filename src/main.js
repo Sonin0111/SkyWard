@@ -744,7 +744,7 @@ class SkyWardSimulator {
     }
     const touchBtn = document.getElementById('touch-btn-fullscreen');
     if (touchBtn) {
-      touchBtn.textContent = active ? '⛶ EXIT' : '⛶ FULL';
+      touchBtn.classList.toggle('icon-btn-active', active);
     }
   }
 

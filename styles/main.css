@@ -636,7 +636,7 @@ body.mobile-ui #top-bar.mobile-topbar-open {
 }
 
 /* ==========================================================================
-   Redesigned Mobile & Touchscreen Virtual RC Joysticks (Mode 2 AETR Layout)
+   Redesigned Mobile & Touchscreen Virtual RC Joysticks + Side Icon Docks
    ========================================================================== */
 .touch-controls-layer {
   position: fixed;
@@ -645,66 +645,74 @@ body.mobile-ui #top-bar.mobile-topbar-open {
   pointer-events: none;
 }
 
-.touch-cluster {
+/* Vertical Side Icon Docks on Left & Right Screen Edges */
+.touch-side-dock {
   position: absolute;
-  bottom: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  padding: 6px;
+  background: rgba(6, 15, 12, 0.52);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 26px;
   pointer-events: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
 }
 
-.touch-cluster-left {
-  left: 196px;
+.touch-side-dock-left {
+  left: 14px;
+  top: 44%;
+  transform: translateY(-50%);
 }
 
-.touch-cluster-right {
-  right: 148px;
+.touch-side-dock-right {
+  right: 14px;
+  bottom: 72px;
 }
 
-.touch-quick-btns {
+.touch-icon-btn {
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(6, 15, 12, 0.55);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  padding: 4px 6px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-}
-
-.touch-action-btn {
-  background: rgba(14, 34, 26, 0.78);
+  justify-content: center;
+  background: rgba(14, 34, 26, 0.82);
   color: #ffffff;
-  border: 1px solid rgba(56, 255, 136, 0.45);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  padding: 6px 11px;
-  border-radius: 14px;
+  border: 1.5px solid rgba(56, 255, 136, 0.48);
+  border-radius: 50%;
   cursor: pointer;
   touch-action: none;
-  text-shadow: 0 1px 2px #000000;
-  transition: transform 0.08s ease, background 0.12s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+  transition: transform 0.08s ease, background 0.14s ease, border-color 0.14s ease;
 }
 
-.touch-action-btn:active {
-  background: rgba(56, 255, 136, 0.48);
+.touch-icon-btn svg {
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.touch-icon-btn.icon-btn-active {
+  background: rgba(26, 84, 54, 0.92);
+  border-color: var(--hud-green);
+  color: var(--hud-green);
+}
+
+.touch-icon-btn:active {
+  background: rgba(56, 255, 136, 0.52);
   border-color: #ffffff;
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .touch-btn-detonate {
-  background: linear-gradient(180deg, rgba(205, 32, 32, 0.92) 0%, rgba(135, 16, 16, 0.92) 100%);
-  border: 1.5px solid #ff7777;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(180deg, rgba(215, 32, 32, 0.94) 0%, rgba(135, 16, 16, 0.94) 100%);
+  border: 2px solid #ff7777;
   color: #ffffff;
-  padding: 6px 16px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  box-shadow: 0 0 12px rgba(255, 48, 48, 0.42);
+  box-shadow: 0 0 14px rgba(255, 48, 48, 0.52);
 }
 
 .touch-btn-detonate.in-range-pulse {
@@ -715,36 +723,53 @@ body.mobile-ui #top-bar.mobile-topbar-open {
   from {
     background: #ff2222;
     border-color: #ffffff;
-    box-shadow: 0 0 16px rgba(255, 56, 56, 0.9);
-    transform: scale(1.03);
+    box-shadow: 0 0 18px rgba(255, 56, 56, 0.95);
+    transform: scale(1.06);
   }
   to {
     background: #aa1111;
     border-color: #ffaa11;
     box-shadow: 0 0 6px rgba(255, 170, 17, 0.5);
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
 }
 
 .touch-btn-detonate:active {
   background: #ff1111;
   border-color: #ffffff;
-  transform: scale(0.94);
+  transform: scale(0.92);
 }
 
-/* Circular Precision Mode-2 RC Gimbal Assembly */
+/* Wide Mode-2 Virtual RC Gimbal Assemblies */
+.touch-cluster {
+  position: absolute;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.touch-cluster-left {
+  left: clamp(142px, 18.5vw, 210px);
+}
+
+.touch-cluster-right {
+  right: clamp(118px, 16vw, 185px);
+}
+
 .touch-gimbal {
   position: relative;
-  width: 144px;
-  height: 144px;
+  width: 204px;
+  height: 150px;
   background: radial-gradient(
-    circle at 50% 50%,
+    ellipse at 50% 50%,
     rgba(10, 26, 20, 0.16) 0%,
     rgba(6, 16, 13, 0.38) 72%,
     rgba(18, 46, 36, 0.54) 100%
   );
   border: 1.8px solid rgba(255, 255, 255, 0.46);
-  border-radius: 50%;
+  border-radius: 44px;
   box-shadow:
     inset 0 0 22px rgba(0, 0, 0, 0.65),
     0 4px 16px rgba(0, 0, 0, 0.45);
@@ -761,19 +786,19 @@ body.mobile-ui #top-bar.mobile-topbar-open {
 
 .gimbal-ring-inner {
   position: absolute;
-  top: 22%;
-  left: 22%;
-  width: 56%;
-  height: 56%;
+  top: 20%;
+  left: 18%;
+  width: 64%;
+  height: 60%;
   border: 1px dashed rgba(255, 255, 255, 0.24);
-  border-radius: 50%;
+  border-radius: 28px;
   pointer-events: none;
 }
 
 .gimbal-grid-h {
   position: absolute;
-  left: 12%;
-  right: 12%;
+  left: 10%;
+  right: 10%;
   top: 50%;
   height: 1px;
   background: rgba(255, 255, 255, 0.24);
@@ -792,15 +817,15 @@ body.mobile-ui #top-bar.mobile-topbar-open {
 
 .gimbal-throttle-ticks {
   position: absolute;
-  top: 16%;
-  bottom: 16%;
+  top: 15%;
+  bottom: 15%;
   left: 50%;
-  width: 16px;
+  width: 18px;
   transform: translateX(-50%);
   background: repeating-linear-gradient(
     to bottom,
-    rgba(56, 255, 136, 0.42) 0px,
-    rgba(56, 255, 136, 0.42) 1.5px,
+    rgba(56, 255, 136, 0.45) 0px,
+    rgba(56, 255, 136, 0.45) 1.5px,
     transparent 1.5px,
     transparent 9px
   );
@@ -811,8 +836,8 @@ body.mobile-ui #top-bar.mobile-topbar-open {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #ffffff 0%, #c8e6d8 48%, #214a38 100%);
@@ -839,7 +864,7 @@ body.mobile-ui #top-bar.mobile-topbar-open {
 
 .gimbal-caption {
   position: absolute;
-  bottom: -20px;
+  bottom: -19px;
   left: -10px;
   right: -10px;
   text-align: center;
@@ -930,23 +955,49 @@ body.mobile-ui #top-bar.mobile-topbar-open {
     font-size: 10.5px;
   }
 
-  .touch-gimbal {
-    width: clamp(112px, 26vh, 138px);
-    height: clamp(112px, 26vh, 138px);
+  .touch-side-dock {
+    gap: 8px;
+    padding: 5px;
   }
 
-  .touch-knob {
+  .touch-side-dock-left {
+    left: 10px;
+    top: 44%;
+  }
+
+  .touch-side-dock-right {
+    right: 10px;
+    bottom: 64px;
+  }
+
+  .touch-icon-btn {
     width: 38px;
     height: 38px;
   }
 
+  .touch-btn-detonate {
+    width: 44px;
+    height: 44px;
+  }
+
+  .touch-gimbal {
+    width: clamp(168px, 24vw, 216px);
+    height: clamp(124px, 33vh, 152px);
+    border-radius: 36px;
+  }
+
+  .touch-knob {
+    width: 42px;
+    height: 42px;
+  }
+
   .touch-cluster-left {
-    left: 155px;
+    left: clamp(136px, 18vw, 195px);
     bottom: 18px;
   }
 
   .touch-cluster-right {
-    right: 120px;
+    right: clamp(114px, 15vw, 175px);
     bottom: 18px;
   }
 
@@ -974,11 +1025,11 @@ body.mobile-ui #top-bar.mobile-topbar-open {
 
 @media (max-width: 680px) {
   .touch-cluster-left {
-    left: 18px;
-    bottom: 68px;
+    left: 64px;
+    bottom: 58px;
   }
   .touch-cluster-right {
-    right: 18px;
-    bottom: 68px;
+    right: 64px;
+    bottom: 58px;
   }
 }

@@ -66,13 +66,46 @@ export class TouchControlsUI {
 
   _buildDOM() {
     this.container.innerHTML = `
-      <!-- Left Mode 2 Gimbal: Throttle (Non-Centering Y) & Yaw (Spring-Centering X) -->
+      <!-- Left Screen Edge Icon Dock: Camera View, FLIR Thermal Mode, Fullscreen -->
+      <div class="touch-side-dock touch-side-dock-left">
+        <button id="touch-btn-view" class="touch-icon-btn" type="button" title="Switch Camera View (FPV / Chase)" aria-label="Switch Camera View">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"></path>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+        </button>
+        <button id="touch-btn-optic" class="touch-icon-btn" type="button" title="Cycle Thermal FLIR / Optical Mode" aria-label="Cycle Thermal Mode">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v3M12 19v3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M2 12h3M19 12h3M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12"></path>
+          </svg>
+        </button>
+        <button id="touch-btn-fullscreen" class="touch-icon-btn" type="button" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Right Screen Edge Icon Dock: Detonate Warhead & New Mission Reset -->
+      <div class="touch-side-dock touch-side-dock-right">
+        <button id="touch-btn-detonate" class="touch-icon-btn touch-btn-detonate" type="button" title="Detonate Warhead" aria-label="Detonate Warhead">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="7"></circle>
+            <circle cx="12" cy="12" r="2.5" fill="currentColor"></circle>
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+          </svg>
+        </button>
+        <button id="touch-btn-restart" class="touch-icon-btn" type="button" title="New Mission / Reset" aria-label="New Mission">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Left Mode 2 Wide Gimbal: Throttle (Non-Centering Y) & Yaw (Spring-Centering X) -->
       <div class="touch-cluster touch-cluster-left">
-        <div class="touch-quick-btns">
-          <button id="touch-btn-view" class="touch-action-btn" type="button">VIEW: FPV</button>
-          <button id="touch-btn-optic" class="touch-action-btn" type="button">FLIR: W-HOT</button>
-          <button id="touch-btn-fullscreen" class="touch-action-btn" type="button">⛶ FULL</button>
-        </div>
         <div id="touch-gimbal-left" class="touch-gimbal" data-side="left">
           <div class="gimbal-ring-inner"></div>
           <div class="gimbal-grid-h"></div>
@@ -85,12 +118,8 @@ export class TouchControlsUI {
         </div>
       </div>
 
-      <!-- Right Mode 2 Gimbal: Pitch (Spring-Centering Y) & Roll (Spring-Centering X) -->
+      <!-- Right Mode 2 Wide Gimbal: Pitch (Spring-Centering Y) & Roll (Spring-Centering X) -->
       <div class="touch-cluster touch-cluster-right">
-        <div class="touch-quick-btns">
-          <button id="touch-btn-detonate" class="touch-action-btn touch-btn-detonate" type="button">DETONATE</button>
-          <button id="touch-btn-restart" class="touch-action-btn" type="button">↻ MISSION</button>
-        </div>
         <div id="touch-gimbal-right" class="touch-gimbal" data-side="right">
           <div class="gimbal-ring-inner"></div>
           <div class="gimbal-grid-h"></div>
@@ -275,11 +304,14 @@ export class TouchControlsUI {
 
   _updateKnobVisuals() {
     if (this.leftKnobEl) {
-      const travelL = this.leftGimbalEl && this.leftGimbalEl.clientWidth > 0
-        ? this.leftGimbalEl.clientWidth * 0.34
-        : 42.0;
-      const lxPx = this.leftYaw * travelL;
-      const lyPx = (1.0 - this.leftThrottle * 2.0) * travelL;
+      const travelLX = this.leftGimbalEl && this.leftGimbalEl.clientWidth > 0
+        ? this.leftGimbalEl.clientWidth * 0.36
+        : 56.0;
+      const travelLY = this.leftGimbalEl && this.leftGimbalEl.clientHeight > 0
+        ? this.leftGimbalEl.clientHeight * 0.34
+        : 44.0;
+      const lxPx = this.leftYaw * travelLX;
+      const lyPx = (1.0 - this.leftThrottle * 2.0) * travelLY;
       this.leftKnobEl.style.transform = `translate(calc(-50% + ${lxPx.toFixed(1)}px), calc(-50% + ${lyPx.toFixed(1)}px))`;
     }
 
@@ -288,34 +320,32 @@ export class TouchControlsUI {
     }
 
     if (this.rightKnobEl) {
-      const travelR = this.rightGimbalEl && this.rightGimbalEl.clientWidth > 0
-        ? this.rightGimbalEl.clientWidth * 0.34
-        : 42.0;
-      const rxPx = this.rightRoll * travelR;
-      const ryPx = this.rightPitch * travelR;
+      const travelRX = this.rightGimbalEl && this.rightGimbalEl.clientWidth > 0
+        ? this.rightGimbalEl.clientWidth * 0.36
+        : 56.0;
+      const travelRY = this.rightGimbalEl && this.rightGimbalEl.clientHeight > 0
+        ? this.rightGimbalEl.clientHeight * 0.34
+        : 44.0;
+      const rxPx = this.rightRoll * travelRX;
+      const ryPx = this.rightPitch * travelRY;
       this.rightKnobEl.style.transform = `translate(calc(-50% + ${rxPx.toFixed(1)}px), calc(-50% + ${ryPx.toFixed(1)}px))`;
     }
   }
 
   /**
-   * Updates mobile button states (FPV/Chase label, Optical FLIR label, and In-Range Detonate pulse).
+   * Updates mobile button active states (FPV/Chase, Optical FLIR, and In-Range Detonate pulse).
    */
   updateStatusBadges({ viewMode, opticalMode, inRange }) {
     const viewBtn = this.container.querySelector('#touch-btn-view');
     if (viewBtn && viewMode) {
-      viewBtn.textContent = viewMode === 'FPV' ? 'VIEW: FPV' : 'VIEW: CHASE';
+      viewBtn.classList.toggle('icon-btn-active', viewMode === 'CHASE');
     }
     const opticBtn = this.container.querySelector('#touch-btn-optic');
     if (opticBtn && opticalMode) {
-      opticBtn.textContent =
-        opticalMode === 'DAY'
-          ? 'OPTIC: DAY'
-          : opticalMode === 'WHITE_HOT'
-          ? 'FLIR: W-HOT'
-          : 'FLIR: B-HOT';
+      opticBtn.classList.toggle('icon-btn-active', opticalMode !== 'DAY');
     }
-    if (this.detonateBtnEl) {
-      this.detonateBtnEl.classList.toggle('in-range-pulse', Boolean(inRange));
+    if (this.detonateBtnEl && typeof inRange === 'boolean') {
+      this.detonateBtnEl.classList.toggle('in-range-pulse', inRange);
     }
   }
 
