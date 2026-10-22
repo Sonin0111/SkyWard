@@ -10,6 +10,7 @@ import { CameraSystem } from './camera/CameraSystem.js';
 import { EffectsManager } from './effects/EffectsManager.js';
 import { TacticalOSD } from './ui/TacticalOSD.js';
 import { ControllerUI } from './ui/ControllerUI.js';
+import { TouchControlsUI } from './ui/TouchControlsUI.js';
 import { runVerificationSuite } from './tests/verificationSuite.js';
 
 /**
@@ -58,6 +59,17 @@ class SkyWardSimulator {
       this.inputManager
     );
 
+    this.touchUI = new TouchControlsUI(
+      document.getElementById('touch-controls-layer'),
+      this.inputManager,
+      {
+        onDetonate: () => this.triggerWarheadDetonation(),
+        onToggleCamera: () => this.toggleCameraView(),
+        onToggleThermal: () => this.toggleOpticalMode(),
+        onRestart: () => this.restartWithNewSeed()
+      }
+    );
+
     // Interception Gameplay State
     this.interceptionState = {
       warheadArmed: false,
@@ -95,7 +107,8 @@ class SkyWardSimulator {
       this.renderer = new THREE.WebGLRenderer({
         canvas: this.viewportCanvas,
         antialias: true,
-        powerPreference: 'high-performance'
+        powerPreference: 'high-performance',
+        logarithmicDepthBuffer: true
       });
     } catch (err) {
       this._showFatalError(`WebGL initialization failed: ${err.message}`);
@@ -131,8 +144,9 @@ class SkyWardSimulator {
     this.interceptorModel.setFpvVisibility(this.cameraSystem.viewMode === 'FPV');
     this.inputManager.resetThrottle(this.config.spawn.initialThrottle);
 
-    // Restore OSD visibility
+    // Restore OSD & Touch RC visibility
     this.osd.setVisible(true);
+    this.touchUI?.reset(this.config.spawn.initialThrottle);
 
     // Generate new procedural enemy reconnaissance UAV route
     this.enemyAI.initScenario(this.currentSeed, this.world.getTerrainHeight);
@@ -229,8 +243,9 @@ class SkyWardSimulator {
     const distM = blastPos.distanceTo(enemyPos);
     const icfg = this.config.interception;
 
-    // 1. Immediately hide FPV OSD overlay while keeping Thermal/FLIR filter active
+    // 1. Immediately hide FPV OSD overlay & Touch Joysticks while keeping Thermal/FLIR filter active
     this.osd.setVisible(false);
+    this.touchUI?.setDetonationHidden(true);
 
     // 2. Freeze player UAV physics & hide player UAV mesh completely
     this.physics.telemetry.detonated = true;
@@ -314,6 +329,7 @@ class SkyWardSimulator {
         st.outcomeSubtitle = 'The interceptor UAV collided with terrain. Maintain safe altitude and airspeed above 55 km/h stall threshold.';
 
         this.osd.setVisible(false);
+        this.touchUI?.setDetonationHidden(true);
         this.interceptorModel.root.visible = false;
         this.effects.triggerExplosion(pPos, 1.0);
         this.cameraSystem.enterSpectatorDetonationMode(
@@ -396,8 +412,9 @@ class SkyWardSimulator {
       if (fpsEl) fpsEl.textContent = `${this.fpsCounter} FPS`;
     }
 
-    // 1. Poll keyboard & USB RC Transmitter Gamepad inputs
+    // 1. Poll keyboard, Virtual Touch Gimbals & USB RC Transmitter Gamepad inputs
     const controls = this.inputManager.update(frameDt);
+    this.touchUI?.syncThrottleFromPhysics(controls.throttle);
     this.controllerUI.update();
 
     if (!this.isPaused) {
@@ -474,6 +491,7 @@ class SkyWardSimulator {
     document.getElementById('btn-cam-view')?.addEventListener('click', () => this.toggleCameraView());
     document.getElementById('btn-optical-mode')?.addEventListener('click', () => this.toggleOpticalMode());
     document.getElementById('btn-controller-ui')?.addEventListener('click', () => this.controllerUI.toggle());
+    document.getElementById('btn-touch-rc')?.addEventListener('click', () => this.touchUI.toggle());
     document.getElementById('btn-detonate')?.addEventListener('click', () => this.triggerWarheadDetonation());
     document.getElementById('btn-restart')?.addEventListener('click', () => this.restartWithNewSeed());
 
@@ -637,6 +655,10 @@ class SkyWardSimulator {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => {
+    window.skyWardApp = new SkyWardSimulator();
+  });
+} else {
   window.skyWardApp = new SkyWardSimulator();
-});
+}

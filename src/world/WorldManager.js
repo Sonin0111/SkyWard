@@ -140,10 +140,16 @@ export class WorldManager {
 
   _initMaterials() {
     this.terrainDayMaterial = new THREE.MeshLambertMaterial({
-      vertexColors: true
+      vertexColors: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
     });
     this.terrainThermalWhiteMat = new THREE.MeshBasicMaterial({
-      vertexColors: true
+      vertexColors: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1
     });
 
     this.waterDayMaterial = new THREE.MeshStandardMaterial({
@@ -151,13 +157,22 @@ export class WorldManager {
       roughness: 0.22,
       metalness: 0.55,
       transparent: true,
-      opacity: 0.88
+      opacity: 0.88,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
     });
     this.waterThermalWhiteMat = new THREE.MeshBasicMaterial({
-      color: 0x101317
+      color: 0x101317,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
     });
     this.waterThermalBlackMat = new THREE.MeshBasicMaterial({
-      color: 0xdce1e6
+      color: 0xdce1e6,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
     });
 
     this.treeDayMaterial = new THREE.MeshLambertMaterial({
@@ -239,7 +254,13 @@ export class WorldManager {
     const lakeCarve = 1.0 - smoothstep(180.0, 750.0, lakeDist);
     h -= lakeCarve * 34.0;
 
-    return Math.max(2.0, h);
+    // Deepen submerged river/lake beds below waterLevelM (12.0m) to prevent shallow shoreline Z-fighting
+    const waterY = this.config.world.waterLevelM;
+    if (h < waterY + 0.4) {
+      h = waterY + 0.4 - (waterY + 0.4 - h) * 1.85;
+    }
+
+    return Math.max(-6.0, h);
   };
 
   /**

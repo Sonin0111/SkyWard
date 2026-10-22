@@ -13,7 +13,7 @@ export class CameraSystem {
     this.camera = new THREE.PerspectiveCamera(
       68,
       window.innerWidth / Math.max(1, window.innerHeight),
-      0.2,
+      1.8,
       19500
     );
 

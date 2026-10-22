@@ -59,6 +59,16 @@ export class InputManager {
       throttle: 0.58
     };
 
+    // Mobile / Touchscreen Virtual RC Gimbal state (Mode 2 layout)
+    this.touchState = {
+      leftActive: false,
+      rightActive: false,
+      yaw: 0.0,
+      throttle: 0.58,
+      roll: 0.0,
+      pitch: 0.0
+    };
+
     // Final merged flight control output
     this.controls = {
       pitch: 0.0,     // -1 (nose down) to +1 (nose up)
@@ -287,10 +297,32 @@ export class InputManager {
    */
   resetThrottle(initialThrottle = 0.58) {
     this.kbState.throttle = initialThrottle;
+    this.touchState.throttle = initialThrottle;
     this.controls.throttle = initialThrottle;
     this.kbState.pitch = 0.0;
     this.kbState.roll = 0.0;
     this.kbState.yaw = 0.0;
+    this.touchState.pitch = 0.0;
+    this.touchState.roll = 0.0;
+    this.touchState.yaw = 0.0;
+  }
+
+  /**
+   * Updates virtual RC stick values from the mobile/touchscreen Mode 2 gimbal UI.
+   */
+  setTouchControls({ leftActive, rightActive, yaw, throttle, roll, pitch }) {
+    if (typeof leftActive === 'boolean') this.touchState.leftActive = leftActive;
+    if (typeof rightActive === 'boolean') this.touchState.rightActive = rightActive;
+    if (typeof yaw === 'number') this.touchState.yaw = clamp(yaw, -1.0, 1.0);
+    if (typeof throttle === 'number') {
+      this.touchState.throttle = clamp(throttle, 0.0, 1.0);
+      if (this.touchState.leftActive) {
+        this._rcThrottleActive = false;
+        this.kbState.throttle = this.touchState.throttle;
+      }
+    }
+    if (typeof roll === 'number') this.touchState.roll = clamp(roll, -1.0, 1.0);
+    if (typeof pitch === 'number') this.touchState.pitch = clamp(pitch, -1.0, 1.0);
   }
 
   /**
@@ -397,18 +429,17 @@ export class InputManager {
       }
     }
 
-    // 3. Combine RC Transmitter and Keyboard controls seamlessly
-    if (hasActiveGamepad) {
-      this.controls.pitch = clamp(rcPitch + this.kbState.pitch, -1.0, 1.0);
-      this.controls.roll = clamp(rcRoll + this.kbState.roll, -1.0, 1.0);
-      this.controls.yaw = clamp(rcYaw + this.kbState.yaw, -1.0, 1.0);
-      this.controls.throttle = clamp(this.kbState.throttle, 0.0, 1.0);
-    } else {
-      this.controls.pitch = this.kbState.pitch;
-      this.controls.roll = this.kbState.roll;
-      this.controls.yaw = this.kbState.yaw;
-      this.controls.throttle = this.kbState.throttle;
-    }
+    // 3. Process Mobile / Touchscreen Virtual RC Joysticks (with Deadzone & Expo)
+    const p = this.profile;
+    const touchRoll = applyDeadzoneAndExpo(this.touchState.roll, p.deadzone, p.expo, p.invert.roll);
+    const touchPitch = applyDeadzoneAndExpo(this.touchState.pitch, p.deadzone, p.expo, p.invert.pitch);
+    const touchYaw = applyDeadzoneAndExpo(this.touchState.yaw, p.deadzone, p.expo, p.invert.yaw);
+
+    // 4. Combine RC Transmitter, Virtual Touch RC Joysticks, and Keyboard controls seamlessly
+    this.controls.pitch = clamp(rcPitch + touchPitch + this.kbState.pitch, -1.0, 1.0);
+    this.controls.roll = clamp(rcRoll + touchRoll + this.kbState.roll, -1.0, 1.0);
+    this.controls.yaw = clamp(rcYaw + touchYaw + this.kbState.yaw, -1.0, 1.0);
+    this.controls.throttle = clamp(this.kbState.throttle, 0.0, 1.0);
 
     // 4. Update real-time Mode 2 stick monitor coordinates for HUD OSD
     this.stickMonitor.leftX = this.controls.yaw;

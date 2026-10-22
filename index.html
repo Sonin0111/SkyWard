@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>SkyWard — 3D Fixed-Wing UAV Interceptor Flight Simulator</title>
   <link rel="stylesheet" href="./styles/main.css" />
 </head>
@@ -25,6 +27,7 @@
     <div class="toolbar-controls">
       <button id="btn-cam-view" class="hud-btn" title="Toggle FPV Nose Cam / 3rd Person Chase Cam (V)">View: FPV [V]</button>
       <button id="btn-optical-mode" class="hud-btn" title="Toggle Daylight / Thermal FLIR White-Hot / Black-Hot (T)">Optic: FLIR W-Hot [T]</button>
+      <button id="btn-touch-rc" class="hud-btn" title="Toggle On-Screen Virtual RC Joysticks for Mobile / Touchscreen">Touch RC</button>
       <button id="btn-controller-ui" class="hud-btn" title="Open RadioMaster TX12 / EdgeTX Controller Mapping (C)">RC Config [C]</button>
       <button id="btn-detonate" class="hud-btn hud-btn-danger" title="Detonate Warhead (Space)">Detonate [Space]</button>
 
@@ -45,6 +48,9 @@
       <button id="btn-verify-specs" class="hud-btn hud-btn-sm" title="Run Automated Flight Physics & Systems Verification Suite">Verify Specs</button>
     </div>
   </header>
+
+  <!-- Mobile / Touchscreen Virtual RC Joysticks (Mode 2 Layout) -->
+  <div id="touch-controls-layer" class="touch-controls-layer hidden" aria-label="Virtual RC Joysticks"></div>
 
   <!-- Collapsible RC Transmitter & Controller Configuration Panel (Toggle via 'C') -->
   <section id="controller-modal" class="modal-panel hidden" aria-label="Controller Configuration"></section>

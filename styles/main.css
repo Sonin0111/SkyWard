@@ -15,12 +15,16 @@
   margin: 0;
   padding: 0;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
   background-color: #050a09;
   font-family: var(--font-mono);
   color: var(--hud-text);
@@ -570,4 +574,237 @@ kbd {
   font-weight: 700;
   z-index: 100;
   text-align: center;
+}
+
+/* ==========================================================================
+   Mobile & Touchscreen Virtual RC Joysticks (Mode 2 AETR Layout)
+   ========================================================================== */
+.touch-controls-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.touch-cluster {
+  position: absolute;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.touch-cluster-left {
+  left: 205px;
+}
+
+.touch-cluster-right {
+  right: 165px;
+}
+
+.touch-quick-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.touch-action-btn {
+  background: rgba(10, 24, 19, 0.72);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  touch-action: none;
+  text-shadow: 0 1px 2px #000000;
+}
+
+.touch-action-btn:active {
+  background: rgba(56, 255, 136, 0.45);
+  border-color: var(--hud-green);
+}
+
+.touch-btn-detonate {
+  background: rgba(165, 24, 24, 0.85);
+  border-color: #ff6666;
+  color: #ffffff;
+  padding: 6px 14px;
+}
+
+.touch-btn-detonate:active {
+  background: #ff2222;
+  border-color: #ffffff;
+}
+
+.touch-gimbal {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  background: rgba(8, 16, 14, 0.36);
+  border: 1.5px solid rgba(255, 255, 255, 0.48);
+  border-radius: 14px;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+  touch-action: none;
+  cursor: grab;
+}
+
+.touch-gimbal.gimbal-active {
+  border-color: var(--hud-green);
+  background: rgba(14, 32, 26, 0.48);
+}
+
+.gimbal-grid-h {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+.gimbal-grid-v {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+.gimbal-throttle-ticks {
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 50%;
+  width: 14px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.28) 0px,
+    rgba(255, 255, 255, 0.28) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+  pointer-events: none;
+}
+
+.touch-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #b8d8c8 55%, #2b5442 100%);
+  border: 2px solid #000000;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+
+.gimbal-active .touch-knob {
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #38ff88 65%, #126636 100%);
+}
+
+.gimbal-caption {
+  position: absolute;
+  bottom: -17px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 1px 1px 0 #000000;
+  pointer-events: none;
+}
+
+/* Portrait Orientation Prompt */
+.orientation-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(4, 10, 8, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: auto;
+}
+
+.orientation-card {
+  border: 1.5px solid var(--hud-green);
+  background: var(--hud-panel-bg);
+  padding: 24px 20px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 340px;
+}
+
+.orientation-icon {
+  font-size: 42px;
+  color: var(--hud-green);
+  margin-bottom: 10px;
+}
+
+.orientation-card h3 {
+  color: var(--hud-green);
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.orientation-card p {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(217, 248, 230, 0.85);
+  margin-bottom: 16px;
+}
+
+/* Mobile Landscape Compact Adjustments */
+@media (max-width: 960px), (max-height: 540px) {
+  #top-bar {
+    min-height: 34px;
+    padding: 2px 8px;
+    gap: 5px;
+  }
+  .brand-sub {
+    display: none;
+  }
+  .hud-btn {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+  .touch-gimbal {
+    width: 114px;
+    height: 114px;
+  }
+  .touch-knob {
+    width: 34px;
+    height: 34px;
+  }
+  .touch-cluster-left {
+    left: 155px;
+    bottom: 16px;
+  }
+  .touch-cluster-right {
+    right: 120px;
+    bottom: 16px;
+  }
+}
+
+@media (max-width: 680px) {
+  .touch-cluster-left {
+    left: 18px;
+    bottom: 72px;
+  }
+  .touch-cluster-right {
+    right: 18px;
+    bottom: 72px;
+  }
 }
